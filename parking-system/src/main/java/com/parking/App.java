@@ -60,7 +60,6 @@ public class App {
             System.err.println("Error parking vehicle: " + e.getMessage());
         }
     }
-
     private static void exitParking(Scanner scanner, ParkingService parkingService) {
         try {
             System.out.print("Enter transaction ID: ");
