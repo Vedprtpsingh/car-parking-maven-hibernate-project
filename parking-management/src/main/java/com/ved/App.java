@@ -8,6 +8,8 @@ import com.ved.model.ParkingSlot;
 
 import java.util.Scanner;
 import java.util.List;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class App {
     private static final ParkingManagementDAO dao = new ParkingManagementDAO();
@@ -17,6 +19,7 @@ public class App {
     	while (true) {
             System.out.println("\nParking Management System");
             System.out.println("1. Add New Vehicle");
+            System.out.println("5. View Available Slots");
             System.out.println("2. Add Parking Slot");
             System.out.println("3. Park Vehicle");
             System.out.println("4. Remove Vehicle");
@@ -162,7 +165,7 @@ public class App {
             System.out.println("\nParking Details:");
             System.out.println("Entry Time: " + record.getEntryTime());
             System.out.println("Exit Time: " + record.getExitTime());
-            System.out.println("Parking Fee: $" + record.getParkingFee());
+            System.out.println("Parking Fee: ₹" + record.getParkingFee());
             
         } catch (Exception e) {
             System.out.println("Error removing vehicle: " + e.getMessage());
@@ -184,20 +187,37 @@ public class App {
     
     private static void showParkedVehicles() {
         System.out.println("\n=== Currently Parked Vehicles ===");
-        List<ParkingRecord> parkedVehicles = dao.getActiveParkingRecords();
         
-        if (parkedVehicles.isEmpty()) {
+        List<ParkingRecord> activeRecords = dao.getActiveParkingRecords();
+        
+        if (activeRecords.isEmpty()) {
             System.out.println("No vehicles are currently parked.");
             return;
         }
         
-        for (ParkingRecord record : parkedVehicles) {
+        System.out.println("\nParked Vehicles List:");
+        System.out.println("------------------------------------------------------");
+        System.out.printf("%-15s %-12s %-12s %-20s%n", 
+            "License Plate", "Vehicle Type", "Slot Number", "Entry Time");
+        System.out.println("------------------------------------------------------");
+        
+        for (ParkingRecord record : activeRecords) {
             Vehicle vehicle = record.getVehicle();
             ParkingSlot slot = record.getParkingSlot();
-            System.out.println("License Plate: " + vehicle.getLicensePlate() +
-                               ", Type: " + vehicle.getVehicleType() +
-                               ", Slot Number: " + slot.getSlotNumber() +
-                               ", Entry Time: " + record.getEntryTime());
+            String entryTime = record.getEntryTime().format(
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+            );
+            
+            System.out.printf("%-15s %-12s %-12s %-20s%n",
+                vehicle.getLicensePlate(),
+                vehicle.getVehicleType(),
+                slot.getSlotNumber(),
+                entryTime
+            );
         }
+        System.out.println("------------------------------------------------------");
+        
+        // Show total count
+        System.out.println("\nTotal Vehicles Parked: " + activeRecords.size());
     }
 }

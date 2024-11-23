@@ -91,8 +91,8 @@ public class ParkingManagementDAO {
 
     private double calculateParkingFee(ParkingRecord record) {
         long hours = ChronoUnit.HOURS.between(record.getEntryTime(), record.getExitTime());
-        // Basic fee calculation: $2 per hour
-        return Math.max(2.0, hours * 2.0);
+        // Basic fee calculation: ₹200 per hour
+        return Math.max(200.0, hours * 2.0);
     }
 
     public List<ParkingSlot> getAvailableSlots() {
