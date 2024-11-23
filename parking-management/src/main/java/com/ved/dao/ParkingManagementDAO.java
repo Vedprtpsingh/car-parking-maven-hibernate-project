@@ -159,4 +159,72 @@ public class ParkingManagementDAO {
         
         return activeRecords;
     }
+    
+    public int getTotalParkingSlots() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Long count = session.createQuery("SELECT COUNT(*) FROM ParkingSlot", Long.class)
+                               .uniqueResult();
+            return count.intValue();
+        }
+    }
+
+    public List<ParkingSlot> getAllParkingSlots() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return session.createQuery("FROM ParkingSlot ORDER BY slotNumber", ParkingSlot.class)
+                         .list();
+        }
+    }
+
+    public void updateParkingSlot(ParkingSlot slot) {
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            session.update(slot);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            e.printStackTrace();
+        }
+    }
+
+    public List<Vehicle> getAllVehicles() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return session.createQuery("FROM Vehicle ORDER BY licensePlate", Vehicle.class)
+                         .list();
+        }
+    }
+
+    public boolean isVehicleParked(Long vehicleId) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Long count = session.createQuery(
+                "SELECT COUNT(*) FROM ParkingRecord " +
+                "WHERE vehicle.id = :vehicleId AND exitTime IS NULL", 
+                Long.class)
+                .setParameter("vehicleId", vehicleId)
+                .uniqueResult();
+            return count > 0;
+        }
+    }
+    
+    public boolean canParkMoreVehicles(String vehicleType) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            // Count total slots of this type
+            Long totalSlots = session.createQuery(
+                "SELECT COUNT(*) FROM ParkingSlot WHERE slotType = :type",
+                Long.class)
+                .setParameter("type", vehicleType)
+                .uniqueResult();
+                
+            // Count occupied slots of this type
+            Long occupiedSlots = session.createQuery(
+                "SELECT COUNT(*) FROM ParkingSlot WHERE slotType = :type AND occupied = true",
+                Long.class)
+                .setParameter("type", vehicleType)
+                .uniqueResult();
+                
+            return occupiedSlots < totalSlots;
+        }
+    }
 }

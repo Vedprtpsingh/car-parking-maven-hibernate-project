@@ -16,27 +16,28 @@ public class App {
     private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-    	while (true) {
+        while (true) {
             System.out.println("\nParking Management System");
             System.out.println("1. Add New Vehicle");
-            System.out.println("5. View Available Slots");
-            System.out.println("2. Add Parking Slot");
+            System.out.println("2. Add Parking Slots");
             System.out.println("3. Park Vehicle");
             System.out.println("4. Remove Vehicle");
             System.out.println("5. View Available Slots");
             System.out.println("6. Show Parked Vehicles");
-            System.out.println("7. Exit");
+            System.out.println("7. Update Parking Slot");
+            System.out.println("8. Show All Registered Vehicles");
+            System.out.println("9. Exit");
             System.out.print("Choose an option: ");
 
             int choice = scanner.nextInt();
-            scanner.nextLine();
+            scanner.nextLine(); // Consume newline
 
             switch (choice) {
                 case 1:
                     addNewVehicle();
                     break;
                 case 2:
-                    addParkingSlot();
+                    addParkingSlots();
                     break;
                 case 3:
                     parkVehicle();
@@ -51,6 +52,12 @@ public class App {
                     showParkedVehicles();
                     break;
                 case 7:
+                    updateParkingSlot();
+                    break;
+                case 8:
+                    showAllVehicles();
+                    break;
+                case 9:
                     System.out.println("Goodbye!");
                     return;
                 default:
@@ -69,16 +76,41 @@ public class App {
         System.out.println("Vehicle added successfully!");
     }
 
-    private static void addParkingSlot() {
-        ParkingSlot slot = new ParkingSlot();
-        System.out.print("Enter slot number: ");
-        slot.setSlotNumber(scanner.nextLine());
+    private static void addParkingSlots() {
+        System.out.println("\n=== Add Parking Slots ===");
+        
+        // Get current slot count
+        int currentSlots = dao.getTotalParkingSlots();
+        System.out.println("Current total parking slots: " + currentSlots);
+        
+        System.out.print("Enter number of slots to add: ");
+        int numSlots = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+        
         System.out.print("Enter slot type (CAR/BIKE): ");
-        slot.setSlotType(scanner.nextLine());
-        slot.setOccupied(false);
-        dao.saveParkingSlot(slot);
-        System.out.println("Parking slot added successfully!");
+        String slotType = scanner.nextLine().toUpperCase();
+        
+        // Validate slot type
+        if (!slotType.equals("CAR") && !slotType.equals("BIKE")) {
+            System.out.println("Invalid slot type! Must be CAR or BIKE");
+            return;
+        }
+        
+        // Add slots
+        for (int i = 0; i < numSlots; i++) {
+            ParkingSlot slot = new ParkingSlot();
+            String slotNumber = slotType.substring(0, 1) + (currentSlots + i + 1);
+            slot.setSlotNumber(slotNumber);
+            slot.setSlotType(slotType);
+            slot.setOccupied(false);
+            dao.saveParkingSlot(slot);
+        }
+        
+        System.out.println(numSlots + " parking slots added successfully!");
     }
+    
+    
+    
 
     private static void parkVehicle() {
         System.out.println("\n=== Park Vehicle ===");
@@ -220,4 +252,93 @@ public class App {
         // Show total count
         System.out.println("\nTotal Vehicles Parked: " + activeRecords.size());
     }
+    
+    
+    private static void updateParkingSlot() {
+        System.out.println("\n=== Update Parking Slot ===");
+        
+        // Show all slots first
+        List<ParkingSlot> allSlots = dao.getAllParkingSlots();
+        System.out.println("\nAll Parking Slots:");
+        System.out.println("------------------------------------------------------");
+        System.out.printf("%-5s %-12s %-12s %-10s%n", "ID", "Slot Number", "Type", "Status");
+        System.out.println("------------------------------------------------------");
+        
+        for (ParkingSlot slot : allSlots) {
+            System.out.printf("%-5d %-12s %-12s %-10s%n",
+                slot.getId(),
+                slot.getSlotNumber(),
+                slot.getSlotType(),
+                slot.isOccupied() ? "Occupied" : "Available");
+        }
+        
+        System.out.print("\nEnter slot ID to update: ");
+        Long slotId = scanner.nextLong();
+        scanner.nextLine(); // Consume newline
+        
+        ParkingSlot slot = dao.findParkingSlotById(slotId);
+        if (slot == null) {
+            System.out.println("Slot not found!");
+            return;
+        }
+        
+        if (slot.isOccupied()) {
+            System.out.println("Cannot update occupied slot!");
+            return;
+        }
+        
+        System.out.println("Current slot details:");
+        System.out.println("Slot Number: " + slot.getSlotNumber());
+        System.out.println("Type: " + slot.getSlotType());
+        
+        System.out.print("Enter new slot type (CAR/BIKE) or press Enter to skip: ");
+        String newType = scanner.nextLine().toUpperCase();
+        if (!newType.isEmpty()) {
+            if (!newType.equals("CAR") && !newType.equals("BIKE")) {
+                System.out.println("Invalid slot type! Must be CAR or BIKE");
+                return;
+            }
+            slot.setSlotType(newType);
+        }
+        
+        System.out.print("Enter new slot number or press Enter to skip: ");
+        String newNumber = scanner.nextLine();
+        if (!newNumber.isEmpty()) {
+            slot.setSlotNumber(newNumber);
+        }
+        
+        dao.updateParkingSlot(slot);
+        System.out.println("Parking slot updated successfully!");
+    }
+    
+    private static void showAllVehicles() {
+        System.out.println("\n=== All Registered Vehicles ===");
+        
+        List<Vehicle> vehicles = dao.getAllVehicles();
+        
+        if (vehicles.isEmpty()) {
+            System.out.println("No vehicles registered in the system.");
+            return;
+        }
+        
+        System.out.println("\nRegistered Vehicles List:");
+        System.out.println("------------------------------------------------------");
+        System.out.printf("%-5s %-15s %-12s %-15s%n", 
+            "ID", "License Plate", "Type", "Status");
+        System.out.println("------------------------------------------------------");
+        
+        for (Vehicle vehicle : vehicles) {
+            String status = dao.isVehicleParked(vehicle.getId()) ? "Parked" : "Not Parked";
+            
+            System.out.printf("%-5d %-15s %-12s %-15s%n",
+                vehicle.getId(),
+                vehicle.getLicensePlate(),
+                vehicle.getVehicleType(),
+                status);
+        }
+        System.out.println("------------------------------------------------------");
+        System.out.println("\nTotal Registered Vehicles: " + vehicles.size());
+    }
+    
+    
 }
