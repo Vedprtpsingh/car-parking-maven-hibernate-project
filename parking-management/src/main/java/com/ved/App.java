@@ -1,4 +1,3 @@
-
 package com.ved;
 
 import com.ved.dao.ParkingManagementDAO;
@@ -9,47 +8,45 @@ import com.ved.model.ParkingSlot;
 import java.util.Scanner;
 import java.util.List;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+//import java.util.List;
 
 public class App {
     private static final ParkingManagementDAO dao = new ParkingManagementDAO();
     private static final Scanner scanner = new Scanner(System.in);
-
     public static void main(String[] args) {
         while (true) {
             System.out.println("\nParking Management System");
-            System.out.println("1. Add New Vehicle");
-            System.out.println("2. Add Parking Slots");
-            System.out.println("3. Park Vehicle");
-            System.out.println("4. Remove Vehicle");
-            System.out.println("5. View Available Slots");
-            System.out.println("6. Show Parked Vehicles");
+            System.out.println("1. Add/Register New Vehicle");
+            System.out.println("2. Park Vehicle");
+            System.out.println("3. View Parked Vehicles");
+            System.out.println("4. Remove Parked Vehicle");
+            System.out.println("5. Add Parking Slots");
+            System.out.println("6. View Available Slots");
             System.out.println("7. Update Parking Slot");
             System.out.println("8. Show All Registered Vehicles");
-            System.out.println("9. Exit");
+            System.out.println("9. Show All Parking Records");
+            System.out.println("0. Exit");
             System.out.print("Choose an option: ");
-
             int choice = scanner.nextInt();
             scanner.nextLine(); // Consume newline
-
             switch (choice) {
                 case 1:
                     addNewVehicle();
                     break;
                 case 2:
-                    addParkingSlots();
+                    parkVehicle();
                     break;
                 case 3:
-                    parkVehicle();
+                    showParkedVehicles();
                     break;
                 case 4:
                     removeVehicle();
                     break;
                 case 5:
-                    viewAvailableSlots();
+                    addParkingSlots();
                     break;
                 case 6:
-                    showParkedVehicles();
+                    viewAvailableSlots();
                     break;
                 case 7:
                     updateParkingSlot();
@@ -58,6 +55,9 @@ public class App {
                     showAllVehicles();
                     break;
                 case 9:
+                	showAllParkingRecords();
+                	break;
+                case 0:
                     System.out.println("Goodbye!");
                     return;
                 default:
@@ -68,6 +68,8 @@ public class App {
 
     private static void addNewVehicle() {
         Vehicle vehicle = new Vehicle();
+        System.out.print("Enter your name: ");
+        vehicle.setVehicleDriverName(scanner.nextLine());
         System.out.print("Enter license plate: ");
         vehicle.setLicensePlate(scanner.nextLine());
         System.out.print("Enter vehicle type (CAR/BIKE): ");
@@ -75,39 +77,56 @@ public class App {
         dao.saveVehicle(vehicle);
         System.out.println("Vehicle added successfully!");
     }
-
+    
     private static void addParkingSlots() {
         System.out.println("\n=== Add Parking Slots ===");
-        
+
         // Get current slot count
         int currentSlots = dao.getTotalParkingSlots();
         System.out.println("Current total parking slots: " + currentSlots);
-        
-        System.out.print("Enter number of slots to add: ");
-        int numSlots = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
-        
+
         System.out.print("Enter slot type (CAR/BIKE): ");
         String slotType = scanner.nextLine().toUpperCase();
-        
+
         // Validate slot type
         if (!slotType.equals("CAR") && !slotType.equals("BIKE")) {
             System.out.println("Invalid slot type! Must be CAR or BIKE");
             return;
         }
+
+        System.out.print("Enter the number of slots to add: ");
+        int numberOfSlots = scanner.nextInt();
+        scanner.nextLine();
+
+//        System.out.print("Enter the capacity for each slot: ");
+//        int capacity = scanner.nextInt();
+//        scanner.nextLine();
         
-        // Add slots
-        for (int i = 0; i < numSlots; i++) {
+        int capacity =1;
+        if (numberOfSlots <= 0 || capacity <= 0) {
+            System.out.println("Invalid input! Both number of slots and capacity must be positive numbers.");
+            return;
+        }
+
+        // Add multiple slots
+        for (int i = 1; i <= numberOfSlots; i++) {
             ParkingSlot slot = new ParkingSlot();
-            String slotNumber = slotType.substring(0, 1) + (currentSlots + i + 1);
+            String slotNumber = "PS" + (currentSlots + i);
             slot.setSlotNumber(slotNumber);
             slot.setSlotType(slotType);
             slot.setOccupied(false);
+            slot.setCapacity(capacity);
+
             dao.saveParkingSlot(slot);
+
+            System.out.println("Added Slot: Number = " + slotNumber + ", Type = " + slotType + ", Capacity = " + capacity);
+            //System.out.println("Added Slot: Number = " + slotNumber + ", Type = " + slotType);
         }
-        
-        System.out.println(numSlots + " parking slots added successfully!");
+
+        System.out.println("Successfully added " + numberOfSlots + " slots!");
     }
+
+
     
     
     
@@ -239,7 +258,6 @@ public class App {
             String entryTime = record.getEntryTime().format(
                 DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
             );
-            
             System.out.printf("%-15s %-12s %-12s %-20s%n",
                 vehicle.getLicensePlate(),
                 vehicle.getVehicleType(),
@@ -340,5 +358,45 @@ public class App {
         System.out.println("\nTotal Registered Vehicles: " + vehicles.size());
     }
     
+    private static void showAllParkingRecords() {
+        System.out.println("\n=== All Parking Records ===");
+
+        // Fetch all parking records (active and completed)
+        List<ParkingRecord> parkingRecords = dao.getActiveParkingRecords();
+
+        if (parkingRecords.isEmpty()) {
+            System.out.println("No parking records found!");
+            return;
+        }
+
+        // Display table header
+        System.out.println("-----------------------------------------------------------------------------------");
+        System.out.printf("%-15s %-12s %-12s %-20s %-20s %-10s%n",
+            "License Plate", "Vehicle Type", "Slot Number", "Entry Time", "Exit Time", "Fee");
+        System.out.println("-----------------------------------------------------------------------------------");
+
+        // Iterate through parking records and display details
+        for (ParkingRecord record : parkingRecords) {
+            String exitTime = (record.getExitTime() != null) 
+                    ? record.getExitTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) 
+                    : "N/A"; // Exit time is null for active records
+
+            String fee = (record.getParkingFee() != null) 
+                    ? "₹" + record.getParkingFee() 
+                    : "N/A"; // Fee is null for active records
+
+            System.out.printf("%-15s %-12s %-12s %-20s %-20s %-10s%n",
+                record.getVehicle().getLicensePlate(),
+                record.getVehicle().getVehicleType(),
+                record.getParkingSlot().getSlotNumber(),
+                record.getEntryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                exitTime,
+                fee
+            );
+        }
+        System.out.println("-----------------------------------------------------------------------------------");
+        System.out.println("\nTotal Parking Records: " + parkingRecords.size());
+    }
+
     
 }

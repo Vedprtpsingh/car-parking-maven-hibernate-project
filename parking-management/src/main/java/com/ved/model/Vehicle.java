@@ -9,6 +9,9 @@ public class Vehicle {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @Column(nullable = false)
+    private String vehicleDriverName;
 
     @Column(nullable = false)
     private String licensePlate;
@@ -40,4 +43,12 @@ public class Vehicle {
     public void setVehicleType(String vehicleType) {
         this.vehicleType = vehicleType;
     }
+
+	public String getVehicleDriverName() {
+		return vehicleDriverName;
+	}
+
+	public void setVehicleDriverName(String vehicleDriverName) {
+		this.vehicleDriverName = vehicleDriverName;
+	}
 }

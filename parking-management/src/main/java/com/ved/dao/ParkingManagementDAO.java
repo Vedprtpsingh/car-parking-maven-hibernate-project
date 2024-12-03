@@ -139,10 +139,10 @@ public class ParkingManagementDAO {
             
             // Create query to get all parking records where exitTime is null (active parkings)
             String hql = "FROM ParkingRecord pr " +
-                        "LEFT JOIN FETCH pr.vehicle " +  // Eager loading of vehicle
-                        "LEFT JOIN FETCH pr.parkingSlot " +  // Eager loading of parking slot
+                        "LEFT JOIN FETCH pr.vehicle " + 
+                        "LEFT JOIN FETCH pr.parkingSlot " + 
                         "WHERE pr.exitTime IS NULL " +
-                        "ORDER BY pr.entryTime DESC";  // Most recent first
+                        "ORDER BY pr.entryTime DESC";
             
             activeRecords = session.createQuery(hql, ParkingRecord.class)
                                   .list();
@@ -227,4 +227,5 @@ public class ParkingManagementDAO {
             return occupiedSlots < totalSlots;
         }
     }
+    
 }

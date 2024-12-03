@@ -16,6 +16,9 @@ public class ParkingSlot {
 
     @Column(nullable = false)
     private boolean occupied;
+    
+    @Column(nullable=false)
+    private int capacity;
 
     @Column(nullable = false)
     private String slotType;  // CAR, BIKE, etc.
@@ -45,7 +48,15 @@ public class ParkingSlot {
         this.occupied = occupied;
     }
 
-    public String getSlotType() {
+    public int getCapacity() {
+		return capacity;
+	}
+
+	public void setCapacity(int capacity) {
+		this.capacity = capacity;
+	}
+
+	public String getSlotType() {
         return slotType;
     }
 
